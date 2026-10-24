@@ -1,0 +1,10 @@
+{
+  "w_auto_prolong_off": 42.0,
+  "w_insufficient_funds": 30.0,
+  "w_prolong_wait": 25.0,
+  "w_failed_tx_ratio": 10.0,
+  "threshold_high": 70.0,
+  "threshold_medium": 35.0,
+  "forecast_days": 30,
+  "loss_calculation_mode": "hybrid"
+}

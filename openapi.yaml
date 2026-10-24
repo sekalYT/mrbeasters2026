@@ -1,0 +1,938 @@
+openapi: 3.1.0
+info:
+  title: Aéza Churn Risk Analyzer API
+  description: Аналитическая система прогнозирования рисков оттока клиентов хостинга,
+    оценки денежных потерь и автоматического ранжирования. Хакатон РНД · Уровень Middle.
+  version: 1.0.0
+paths:
+  /api/v1/auth/login:
+    post:
+      tags:
+      - Аутентификация
+      summary: Вход по логину и паролю
+      description: 'Аутентификация пользователя по логину и паролю.
+
+        Устанавливает cookie access_token и возвращает JWT токен.'
+      operationId: login_api_v1_auth_login_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCredentials'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/auth/me:
+    get:
+      tags:
+      - Аутентификация
+      summary: Получение текущего пользователя
+      description: Возвращает информацию о текущем авторизованном пользователе.
+      operationId: get_me_api_v1_auth_me_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInfo'
+      security:
+      - HTTPBearer: []
+  /api/v1/auth/logout:
+    post:
+      tags:
+      - Аутентификация
+      summary: Завершение текущей сессии
+      description: Завершает сессию и очищает cookie авторизации.
+      operationId: logout_api_v1_auth_logout_post
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/auth/oidc/mock-login:
+    get:
+      tags:
+      - Аутентификация
+      summary: Вход через OIDC (демо/mock)
+      description: 'Дополнительная функция: вход через корпоративный OIDC SSO провайдер
+        (эмуляция успешного входа).'
+      operationId: oidc_mock_login_api_v1_auth_oidc_mock_login_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /api/v1/customers:
+    get:
+      tags:
+      - Клиенты
+      summary: Получение списка клиентов с оценками риска
+      description: 'Получение списка клиентов с оценками риска.
+
+        Поддерживает фильтрацию по уровням риска и двунаправленную сортировку
+
+        по ID, email, balance, totalReplenished и risk_score.'
+      operationId: get_customers_api_v1_customers_get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: risk_level
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: 'Фильтр по уровню риска: high, medium, low, unknown или all'
+          title: Risk Level
+        description: 'Фильтр по уровню риска: high, medium, low, unknown или all'
+      - name: sort_by
+        in: query
+        required: false
+        schema:
+          type: string
+          description: 'Поле для сортировки: id, email, balance, totalReplenished,
+            risk_score, loyalty_score'
+          default: risk_score
+          title: Sort By
+        description: 'Поле для сортировки: id, email, balance, totalReplenished, risk_score,
+          loyalty_score'
+      - name: sort_order
+        in: query
+        required: false
+        schema:
+          type: string
+          pattern: ^(asc|desc)$
+          description: 'Направление сортировки: asc (по возрастанию) или desc (по
+            убыванию)'
+          default: desc
+          title: Sort Order
+        description: 'Направление сортировки: asc (по возрастанию) или desc (по убыванию)'
+      - name: search
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          description: Поиск по email или ID клиента
+          title: Search
+        description: Поиск по email или ID клиента
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomerDetail'
+                title: Response Get Customers Api V1 Customers Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/customers/{id}:
+    get:
+      tags:
+      - Клиенты
+      summary: Получение подробной оценки клиента
+      description: Получение подробной оценки клиента, списка его услуг, признаков
+        риска и объяснений.
+      operationId: get_customer_by_id_api_v1_customers__id__get
+      security:
+      - HTTPBearer: []
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          title: Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomerDetail'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/analytics/summary:
+    get:
+      tags:
+      - Аналитика
+      summary: Сводные показатели риска и денежной оценки
+      description: 'Получение сводных показателей риска, распределения клиентов по
+        уровням,
+
+        денежной оценки потенциальных потерь и данных для графика оттока.'
+      operationId: get_analytics_summary_api_v1_analytics_summary_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsSummary'
+      security:
+      - HTTPBearer: []
+  /api/v1/model/settings:
+    get:
+      tags:
+      - Настройки модели
+      summary: Получение действующих настроек модели
+      description: Получение действующих настроек, порогов и весовых коэффициентов
+        модели.
+      operationId: get_model_settings_api_v1_model_settings_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelSettings'
+      security:
+      - HTTPBearer: []
+    patch:
+      tags:
+      - Настройки модели
+      summary: Изменение настроек модели с пересчётом
+      description: 'Изменение настроек и весовых коэффициентов модели.
+
+        Автоматически пересчитывает оценки и сохраняет изменения в конфигурацию.'
+      operationId: update_model_settings_api_v1_model_settings_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModelSettingsUpdate'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelSettings'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /api/v1/source/snapshot:
+    put:
+      tags:
+      - Источник данных
+      summary: Загрузка или полная замена снимка исходных данных
+      description: 'Загрузка или полная замена снимка исходных данных (аккаунты, услуги,
+        транзакции)
+
+        с автоматическим пересчётом всех показателей риска.'
+      operationId: put_snapshot_api_v1_source_snapshot_put
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DataSnapshot'
+        required: true
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+      security:
+      - HTTPBearer: []
+  /metrics:
+    get:
+      tags:
+      - Метрики
+      summary: Метрики в формате Prometheus
+      description: 'Отдаёт актуальные агрегированные показатели в формате, совместимом
+        с Prometheus:
+
+        - Количество клиентов по уровням риска (high, medium, low, unknown)
+
+        - Потенциальные денежные потери (в евро и евроцентах)
+
+        - Количество услуг под риском
+
+        - Средний риск-скор
+
+        - Счётчик пересчётов модели'
+      operationId: get_prometheus_metrics_metrics_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /api/v1/events:
+    get:
+      summary: Sse Events
+      description: SSE stream endpoint for live dashboard updates without page reload.
+      operationId: sse_events_api_v1_events_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    Account:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email:
+          type: string
+          title: Email
+        balance:
+          type: integer
+          minimum: 0.0
+          title: Balance
+          description: Основной баланс в евроцентах (€1 = 100)
+        withdrawBalance:
+          type: integer
+          minimum: 0.0
+          title: Withdrawbalance
+          description: Доступный для вывода реферальный баланс
+          default: 0
+        totalReplenished:
+          type: integer
+          minimum: 0.0
+          title: Totalreplenished
+          description: Всего пополнено за всё время в евроцентах
+          default: 0
+        bonusBalance:
+          type: integer
+          minimum: 0.0
+          title: Bonusbalance
+          description: Бонусный баланс в евроцентах
+          default: 0
+        bonusState:
+          type: string
+          enum:
+          - locked
+          - unlocked
+          title: Bonusstate
+          description: Возможность тратить бонусный баланс
+          default: locked
+      type: object
+      required:
+      - id
+      - email
+      - balance
+      title: Account
+    AnalyticsSummary:
+      properties:
+        total_customers:
+          type: integer
+          title: Total Customers
+        high_risk_customers:
+          type: integer
+          title: High Risk Customers
+        medium_risk_customers:
+          type: integer
+          title: Medium Risk Customers
+        low_risk_customers:
+          type: integer
+          title: Low Risk Customers
+        unknown_risk_customers:
+          type: integer
+          title: Unknown Risk Customers
+        total_services:
+          type: integer
+          title: Total Services
+        services_at_risk:
+          type: integer
+          title: Services At Risk
+        total_potential_loss_cents:
+          type: integer
+          title: Total Potential Loss Cents
+        total_potential_loss_eur:
+          type: number
+          title: Total Potential Loss Eur
+        total_mrr_at_risk_eur:
+          type: number
+          title: Total Mrr At Risk Eur
+        total_balance_deficit_eur:
+          type: number
+          title: Total Balance Deficit Eur
+        average_risk_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Average Risk Score
+        loss_calculation_explanation:
+          type: string
+          title: Loss Calculation Explanation
+        forecast_chart_data:
+          items:
+            $ref: '#/components/schemas/ChurnForecastPoint'
+          type: array
+          title: Forecast Chart Data
+      type: object
+      required:
+      - total_customers
+      - high_risk_customers
+      - medium_risk_customers
+      - low_risk_customers
+      - unknown_risk_customers
+      - total_services
+      - services_at_risk
+      - total_potential_loss_cents
+      - total_potential_loss_eur
+      - total_mrr_at_risk_eur
+      - total_balance_deficit_eur
+      - average_risk_score
+      - loss_calculation_explanation
+      title: AnalyticsSummary
+    AuthResponse:
+      properties:
+        token:
+          type: string
+          title: Token
+        token_type:
+          type: string
+          title: Token Type
+          default: bearer
+        user:
+          $ref: '#/components/schemas/UserInfo'
+      type: object
+      required:
+      - token
+      - user
+      title: AuthResponse
+    ChurnForecastPoint:
+      properties:
+        label:
+          type: string
+          title: Label
+        fact_deleted_services:
+          type: integer
+          title: Fact Deleted Services
+        forecast_at_risk_services:
+          type: integer
+          title: Forecast At Risk Services
+        forecast_lost_revenue_eur:
+          type: number
+          title: Forecast Lost Revenue Eur
+      type: object
+      required:
+      - label
+      - fact_deleted_services
+      - forecast_at_risk_services
+      - forecast_lost_revenue_eur
+      title: ChurnForecastPoint
+    CustomerDetail:
+      properties:
+        id:
+          type: integer
+          title: Id
+        email:
+          type: string
+          title: Email
+        balance:
+          type: integer
+          title: Balance
+        balance_eur:
+          type: number
+          title: Balance Eur
+        withdrawBalance:
+          type: integer
+          title: Withdrawbalance
+        withdrawBalance_eur:
+          type: number
+          title: Withdrawbalance Eur
+        totalReplenished:
+          type: integer
+          title: Totalreplenished
+        totalReplenished_eur:
+          type: number
+          title: Totalreplenished Eur
+        bonusBalance:
+          type: integer
+          title: Bonusbalance
+        bonusBalance_eur:
+          type: number
+          title: Bonusbalance Eur
+        bonusState:
+          type: string
+          enum:
+          - locked
+          - unlocked
+          title: Bonusstate
+        risk_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Risk Score
+          description: Оценка риска от 0.0 до 100.0 (null если данных недостаточно)
+        risk_level:
+          type: string
+          enum:
+          - high
+          - medium
+          - low
+          - unknown
+          title: Risk Level
+          description: 'Уровень риска: high, medium, low или unknown при недостатке
+            данных'
+        loyalty_score:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Loyalty Score
+          description: Обратная шкала лояльности (100 - risk_score)
+        reasons:
+          items:
+            type: string
+          type: array
+          title: Reasons
+          description: Понятные причины оценки риска
+        explanations:
+          items:
+            $ref: '#/components/schemas/FeatureExplanation'
+          type: array
+          title: Explanations
+        services_count:
+          type: integer
+          title: Services Count
+          default: 0
+        active_services_count:
+          type: integer
+          title: Active Services Count
+          default: 0
+        services_at_risk_count:
+          type: integer
+          title: Services At Risk Count
+          default: 0
+        total_mrr_cents:
+          type: integer
+          title: Total Mrr Cents
+          default: 0
+        total_mrr_eur:
+          type: number
+          title: Total Mrr Eur
+          default: 0.0
+        potential_monthly_loss_cents:
+          type: integer
+          title: Potential Monthly Loss Cents
+          default: 0
+        potential_monthly_loss_eur:
+          type: number
+          title: Potential Monthly Loss Eur
+          default: 0.0
+        upcoming_renewal_cost_cents:
+          type: integer
+          title: Upcoming Renewal Cost Cents
+          default: 0
+        upcoming_renewal_cost_eur:
+          type: number
+          title: Upcoming Renewal Cost Eur
+          default: 0.0
+        balance_deficit_cents:
+          type: integer
+          title: Balance Deficit Cents
+          default: 0
+        balance_deficit_eur:
+          type: number
+          title: Balance Deficit Eur
+          default: 0.0
+        services:
+          items:
+            $ref: '#/components/schemas/Service'
+          type: array
+          title: Services
+        transactions:
+          items:
+            $ref: '#/components/schemas/Transaction'
+          type: array
+          title: Transactions
+      type: object
+      required:
+      - id
+      - email
+      - balance
+      - balance_eur
+      - withdrawBalance
+      - withdrawBalance_eur
+      - totalReplenished
+      - totalReplenished_eur
+      - bonusBalance
+      - bonusBalance_eur
+      - bonusState
+      - risk_level
+      title: CustomerDetail
+    DataSnapshot:
+      properties:
+        accounts:
+          items:
+            $ref: '#/components/schemas/Account'
+          type: array
+          title: Accounts
+        services:
+          items:
+            $ref: '#/components/schemas/Service'
+          type: array
+          title: Services
+        transactions:
+          items:
+            $ref: '#/components/schemas/Transaction'
+          type: array
+          title: Transactions
+      type: object
+      required:
+      - accounts
+      - services
+      - transactions
+      title: DataSnapshot
+    FeatureExplanation:
+      properties:
+        feature_name:
+          type: string
+          title: Feature Name
+        weight:
+          type: number
+          title: Weight
+        raw_score:
+          type: number
+          title: Raw Score
+        weighted_score:
+          type: number
+          title: Weighted Score
+        reason:
+          type: string
+          title: Reason
+      type: object
+      required:
+      - feature_name
+      - weight
+      - raw_score
+      - weighted_score
+      - reason
+      title: FeatureExplanation
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    ModelSettings:
+      properties:
+        w_auto_prolong_off:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: W Auto Prolong Off
+          description: Вес отключенного автопродления
+          default: 35.0
+        w_insufficient_funds:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: W Insufficient Funds
+          description: Вес нехватки средств для продления
+          default: 30.0
+        w_prolong_wait:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: W Prolong Wait
+          description: Вес услуги в статусе prolong_wait
+          default: 25.0
+        w_failed_tx_ratio:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: W Failed Tx Ratio
+          description: Вес доли неуспешных транзакций
+          default: 10.0
+        threshold_high:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Threshold High
+          description: Порог высокого риска
+          default: 70.0
+        threshold_medium:
+          type: number
+          maximum: 100.0
+          minimum: 0.0
+          title: Threshold Medium
+          description: Порог среднего риска
+          default: 35.0
+        forecast_days:
+          type: integer
+          maximum: 365.0
+          minimum: 1.0
+          title: Forecast Days
+          description: Горизонт прогноза в днях
+          default: 30
+        loss_calculation_mode:
+          type: string
+          enum:
+          - mrr_risk_weighted
+          - direct_deficit
+          - hybrid
+          title: Loss Calculation Mode
+          description: Методология расчёта денежных потерь
+          default: hybrid
+      type: object
+      title: ModelSettings
+    ModelSettingsUpdate:
+      properties:
+        w_auto_prolong_off:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: W Auto Prolong Off
+        w_insufficient_funds:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: W Insufficient Funds
+        w_prolong_wait:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: W Prolong Wait
+        w_failed_tx_ratio:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: W Failed Tx Ratio
+        threshold_high:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: Threshold High
+        threshold_medium:
+          anyOf:
+          - type: number
+            maximum: 100.0
+            minimum: 0.0
+          - type: 'null'
+          title: Threshold Medium
+        forecast_days:
+          anyOf:
+          - type: integer
+            maximum: 365.0
+            minimum: 1.0
+          - type: 'null'
+          title: Forecast Days
+        loss_calculation_mode:
+          anyOf:
+          - type: string
+            enum:
+            - mrr_risk_weighted
+            - direct_deficit
+            - hybrid
+          - type: 'null'
+          title: Loss Calculation Mode
+      type: object
+      title: ModelSettingsUpdate
+    Service:
+      properties:
+        id:
+          type: integer
+          title: Id
+        name:
+          type: string
+          title: Name
+        ownerId:
+          type: integer
+          title: Ownerid
+        paymentTerm:
+          type: string
+          enum:
+          - hour
+          - week
+          - month
+          - quarter_year
+          - half_year
+          - year
+          title: Paymentterm
+        autoProlong:
+          type: boolean
+          title: Autoprolong
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        expiresAt:
+          type: string
+          format: date-time
+          title: Expiresat
+        status:
+          type: string
+          enum:
+          - active
+          - blocked
+          - deleted
+          - suspended
+          - prolong_wait
+          title: Status
+        price:
+          type: integer
+          minimum: 0.0
+          title: Price
+          description: Стоимость услуги в евроцентах
+      type: object
+      required:
+      - id
+      - name
+      - ownerId
+      - paymentTerm
+      - createdAt
+      - expiresAt
+      - status
+      - price
+      title: Service
+    Transaction:
+      properties:
+        id:
+          type: integer
+          title: Id
+        amount:
+          type: integer
+          maximum: 1000.0
+          minimum: 0.0
+          title: Amount
+          description: Сумма транзакции в евроцентах
+        status:
+          type: string
+          enum:
+          - not_performed
+          - performed
+          title: Status
+          default: not_performed
+        performedAt:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Performedat
+        createdAt:
+          type: string
+          format: date-time
+          title: Createdat
+        type:
+          type: string
+          enum:
+          - prolong
+          - order
+          title: Type
+        serviceId:
+          type: integer
+          title: Serviceid
+      type: object
+      required:
+      - id
+      - amount
+      - createdAt
+      - type
+      - serviceId
+      title: Transaction
+    UserCredentials:
+      properties:
+        username:
+          type: string
+          title: Username
+        password:
+          type: string
+          title: Password
+      type: object
+      required:
+      - username
+      - password
+      title: UserCredentials
+    UserInfo:
+      properties:
+        username:
+          type: string
+          title: Username
+        role:
+          type: string
+          title: Role
+        auth_type:
+          type: string
+          title: Auth Type
+          default: password
+      type: object
+      required:
+      - username
+      - role
+      title: UserInfo
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+  securitySchemes:
+    HTTPBearer:
+      type: http
+      scheme: bearer

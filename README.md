@@ -9,9 +9,12 @@
 [![OpenAPI 3.1](https://img.shields.io/badge/OpenAPI-3.1-6BA539?style=for-the-badge&logo=openapiinitiative&logoColor=white)](http://localhost:8000/api/v1/docs)
 [![Pytest](https://img.shields.io/badge/Tests-15%2F15%20Passed-10B981?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
 [![License](https://img.shields.io/badge/License-MIT-FF6200?style=for-the-badge)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-HTTPS%20Online-10B981?style=for-the-badge&logo=nginx&logoColor=white)](https://94.228.175.230.sslip.io/)
 
 **Хакатон РНД 2026 · Уровень Middle · Кейс Aéza**  
 Команда: **MRBEASTER'ы 2**
+
+🌐 **Онлайн демо-стенд (Nginx + SSL Aéza):** [https://94.228.175.230.sslip.io/](https://94.228.175.230.sslip.io/) • [Swagger UI](https://94.228.175.230.sslip.io/api/v1/docs) • [Prometheus](https://94.228.175.230.sslip.io/metrics)
 
 [🚀 Быстрый старт](#-быстрый-старт) • [📊 3 главных вопроса](#-3-главных-вопроса-бизнеса) • [📐 Модель скоринга](#-математическая-модель-скоринга) • [💰 Финансы & MRR](#-финансовая-модель-и-mrr) • [🏗️ Архитектура](#️-архитектура-решения) • [🔌 API & Swagger](#-api-спецификация-и-эндпоинты) • [🧪 Тесты](#-автотесты)
 
@@ -116,12 +119,12 @@ flowchart TD
 
 | Период тарифа (`paymentTerm`) | Множитель к месяцу | Формула приведения к MRR |
 | :--- | :---: | :--- |
-| **`hour`** (почасовой) | $\times 720$ | $\text{MRR} = \text{price} \times 720$ |
-| **`week`** (еженедельный) | $\times 4.333$ | $\text{MRR} = \text{price} \times 4.333$ |
-| **`month`** (ежемесячный) | $\times 1.0$ | $\text{MRR} = \text{price} \times 1.0$ |
-| **`quarter_year`** (раз в квартал) | $\times 1/3$ | $\text{MRR} = \text{price} / 3$ |
-| **`half_year`** (раз в полгода) | $\times 1/6$ | $\text{MRR} = \text{price} / 6$ |
-| **`year`** (годовой) | $\times 1/12$ | $\text{MRR} = \text{price} / 12$ |
+| **`hour`** (почасовой) | × 720 | MRR = price × 720 |
+| **`week`** (еженедельный) | × 4.333 | MRR = price × 4.333 |
+| **`month`** (ежемесячный) | × 1.0 | MRR = price × 1.0 |
+| **`quarter_year`** (раз в квартал) | × 1/3 | MRR = price / 3 |
+| **`half_year`** (раз в полгода) | × 1/6 | MRR = price / 6 |
+| **`year`** (годовой) | × 1/12 | MRR = price / 12 |
 
 ### Оценка потенциальных потерь (Potential Loss)
 
@@ -129,7 +132,9 @@ flowchart TD
 \text{Loss} = \sum_{s \in \text{Services}} \left( \text{MRR}_s \times P(\text{churn}) \times \min \left( 1.0, \; \frac{\text{DaysUntilExpiration}}{30} \right) \right)
 ```
 
-*где $P(\text{churn}) = \frac{\text{RiskScore}}{100}$ — вероятность оттока клиента.*
+> **Где:**
+> * **P(churn) = RiskScore / 100** — вероятность оттока клиента;
+> * **DaysUntilExpiration** — количество дней до окончания оплаченного периода.
 
 ### Кассовый дефицит (Размер необходимого пополнения)
 
@@ -137,13 +142,27 @@ flowchart TD
 \text{Deficit} = \max \Big( 0.0, \; \text{RenewalCost} - (\text{Balance} + \text{ActiveBonus}) \Big)
 ```
 
-*где $\text{RenewalCost}$ — стоимость предстоящих продлений, $\text{Balance}$ — реальный баланс, $\text{ActiveBonus}$ — доступные бонусы.*
+> **Где:**
+> * **RenewalCost** — суммарная стоимость предстоящих продлений услуг;
+> * **Balance** — реальный денежный баланс клиента;
+> * **ActiveBonus** — сумма доступных активных бонусов.
 
 ---
 
 ## 🚀 Быстрый старт
 
-### Вариант 1. Развёртывание в Docker Compose (Рекомендуемый)
+### 🌐 Онлайн демо-стенд (Развёрнуто на сервере Aéza + Nginx SSL)
+
+Проект развёрнут и доступен онлайн (поддерживает как HTTPS с SSL, так и прямой IP):
+* 🔒 **Веб-панель (HTTPS / SSL):** [https://94.228.175.230.sslip.io/](https://94.228.175.230.sslip.io/) *(работает на мобильных, в инкогнито и на ПК)*
+* 🌐 **Прямой IP (HTTP):** [http://94.228.175.230/](http://94.228.175.230/)
+* 📖 **Интерактивный Swagger UI:** [https://94.228.175.230.sslip.io/api/v1/docs](https://94.228.175.230.sslip.io/api/v1/docs)
+* 📈 **Метрики Prometheus:** [https://94.228.175.230.sslip.io/metrics](https://94.228.175.230.sslip.io/metrics)
+* 🔑 **Учётные данные:** логин `admin`, пароль `aeza2026` (или кнопка Aéza ID OIDC SSO)
+
+---
+
+### Вариант 1. Развёртывание в Docker Compose
 
 Требуется установленный Docker и Docker Compose.
 

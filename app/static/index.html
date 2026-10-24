@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aéza · Анализатор рисков оттока</title>
+
+  <!-- Favicon: Official Aéza [ é ] Keycap Icon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23000000' stroke='%23FF6200' stroke-width='1.5'/%3E%3Ctext x='16' y='22' fill='%23FF6200' font-family='sans-serif' font-weight='800' font-size='18' text-anchor='middle'%3E%C3%A9%3C/text%3E%3C/svg%3E">
+
+  <!-- Google Fonts: Exo 2 (Primary Brand) + Inter (Secondary UI) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,600;1,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/styles.css?v=3.0">
+</head>
+<body>
+  <!-- Header -->
+  <header class="app-header">
+    <div class="brand-wrapper">
+      <!-- Official Aéza 4-Keycaps Logo (Brandbook p. 6-11) -->
+      <a href="/" class="aeza-logo-link" title="Aéza Hosting Infrastructure">
+        <div class="aeza-keycaps-logo">
+          <div class="keycap">a</div>
+          <div class="keycap keycap-accent">é</div>
+          <div class="keycap">z</div>
+          <div class="keycap">a</div>
+        </div>
+      </a>
+
+      <div class="brand-titles">
+        <h1 class="brand-title">Анализатор рисков оттока</h1>
+      </div>
+    </div>
+
+    <nav class="nav-actions">
+      <!-- Theme Switcher (Light / Dark) -->
+      <button class="btn btn-theme-toggle" id="btn-theme-toggle" title="Переключить тему (Светлая / Тёмная)" aria-label="Смена темы">
+        <svg class="theme-icon-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="theme-icon-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <span id="theme-status-text">Тема</span>
+      </button>
+
+      <button class="btn" id="btn-open-settings">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+        Параметры модели
+      </button>
+
+      <button class="btn" id="btn-open-snapshot">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Импорт данных
+      </button>
+
+      <a href="/api/v1/docs" target="_blank" class="btn btn-ghost" title="Интерактивная Swagger UI документация">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Swagger
+      </a>
+
+      <a href="/metrics" target="_blank" class="btn btn-ghost" title="Метрики Prometheus">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+        /metrics
+      </a>
+
+      <!-- Current User Profile & Logout -->
+      <div class="user-chip" id="user-chip">
+        <div class="user-avatar" id="user-avatar-char" title="Aéza Account">é</div>
+        <div class="user-details">
+          <span class="user-name" id="username-display">admin</span>
+          <span class="user-role" id="user-role-display">Administrator</span>
+        </div>
+        <button class="btn btn-danger-outline" id="btn-logout" title="Завершить сессию" style="padding: 0.25rem 0.5rem; font-size: 0.7rem; margin-left: 0.25rem;">
+          Выход
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+    <!-- KPI Row (Clean Headers without pills) -->
+    <section class="kpi-row">
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-title">Потенциальные потери</span>
+        </div>
+        <div class="kpi-number" id="kpi-loss-eur">€0.00</div>
+        <div class="kpi-footer" id="kpi-loss-cents">0 центов выручки под угрозой</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-title">Высокий риск</span>
+        </div>
+        <div class="kpi-number" id="kpi-high-count" style="color: var(--risk-high);">0</div>
+        <div class="kpi-footer">клиентов требуют контакта</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-title">Средний риск</span>
+        </div>
+        <div class="kpi-number" id="kpi-med-count" style="color: var(--risk-med);">0</div>
+        <div class="kpi-footer">клиентов в зоне риска</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-title">Низкий риск</span>
+        </div>
+        <div class="kpi-number" id="kpi-low-count" style="color: var(--risk-low);">0</div>
+        <div class="kpi-footer">клиентов стабильны</div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="kpi-card-header">
+          <span class="kpi-title">Средний Risk Score</span>
+        </div>
+        <div class="kpi-number" id="kpi-avg-score">0.0</div>
+        <div class="kpi-footer" id="kpi-services-risk">0 услуг под угрозой</div>
+      </div>
+    </section>
+
+    <!-- Methodology Details (Collapsible disclosure for jury criteria) -->
+    <details class="methodology-details" id="explanation-banner">
+      <summary class="methodology-summary">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--brand-orange);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <span>Методика расчёта денежной оценки потерь (пояснение для жюри)</span>
+        </div>
+        <span class="summary-arrow">▼</span>
+      </summary>
+      <div class="methodology-body" id="explanation-text">
+        Загрузка аналитической модели...
+      </div>
+    </details>
+
+    <!-- Charts Section -->
+    <section class="charts-grid">
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-heading">
+            <span>График оттока: исторический факт vs прогноз непродлений</span>
+          </div>
+          <div class="chart-legend">
+            <span class="legend-tag"><span class="legend-dot" style="background: var(--risk-high);"></span> Факт</span>
+            <span class="legend-tag"><span class="legend-dot" style="background: var(--brand-orange);"></span> Прогноз</span>
+          </div>
+        </div>
+        <canvas id="churnTimelineCanvas" height="175" style="width: 100%; height: 175px; display: block;"></canvas>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <div class="chart-heading">
+            <span>Распределение портфеля клиентов</span>
+          </div>
+        </div>
+        <canvas id="riskDistributionCanvas" height="175" style="width: 100%; height: 175px; display: block;"></canvas>
+      </div>
+    </section>
+
+    <!-- Controls / Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" class="search-field" placeholder="Поиск по email или ID клиента...">
+      </div>
+
+      <div class="segmented-filters">
+        <button class="filter-btn active" data-filter="all">Все (<span id="count-all">0</span>)</button>
+        <button class="filter-btn" data-filter="high">Высокий (<span id="count-high">0</span>)</button>
+        <button class="filter-btn" data-filter="medium">Средний (<span id="count-med">0</span>)</button>
+        <button class="filter-btn" data-filter="low">Низкий (<span id="count-low">0</span>)</button>
+        <button class="filter-btn" data-filter="unknown">Без оценки (<span id="count-unk">0</span>)</button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="data-table-wrapper">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th data-sort="id">ID <span class="sort-arrow">⇅</span></th>
+            <th data-sort="email">Клиент / Email <span class="sort-arrow">⇅</span></th>
+            <th data-sort="balance">Баланс (€) <span class="sort-arrow">⇅</span></th>
+            <th data-sort="totalReplenished">Пополнений (€) <span class="sort-arrow">⇅</span></th>
+            <th data-sort="risk_score">Risk Score / Лояльность <span class="sort-arrow">▼</span></th>
+            <th>Категория</th>
+            <th>Потери / мес</th>
+            <th>Факторы риска</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="customers-tbody">
+          <tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 3rem;">Загрузка данных...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Branded Footer -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <div class="aeza-keycaps-logo small">
+          <div class="keycap">a</div>
+          <div class="keycap keycap-accent">é</div>
+          <div class="keycap">z</div>
+          <div class="keycap">a</div>
+        </div>
+        <span class="footer-text">Aéza · Анализатор рисков оттока хостинга</span>
+      </div>
+      <div class="footer-right">
+        <span class="footer-sub">Хакатон РНД · Уровень Middle</span>
+      </div>
+    </footer>
+  </main>
+
+  <!-- Modal: Model Settings -->
+  <div class="modal-backdrop" id="modal-settings">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title-text">Параметры скоринговой модели</h2>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+            Изменения пересчитывают показатели в реальном времени без перезагрузки страницы
+          </div>
+        </div>
+        <button class="close-x" id="btn-close-settings">&times;</button>
+      </div>
+
+      <form id="settings-form">
+        <div class="field-group">
+          <div class="field-label">
+            <span>Вес: Отключенное автопродление (w_auto_prolong_off)</span>
+            <span class="slider-val-badge" id="val-auto-prolong">35</span>
+          </div>
+          <input type="range" id="input-auto-prolong" min="0" max="100" step="1" value="35">
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">
+            <span>Вес: Нехватка средств для продления (w_insufficient_funds)</span>
+            <span class="slider-val-badge" id="val-insufficient-funds">30</span>
+          </div>
+          <input type="range" id="input-insufficient-funds" min="0" max="100" step="1" value="30">
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">
+            <span>Вес: Статус prolong_wait (w_prolong_wait)</span>
+            <span class="slider-val-badge" id="val-prolong-wait">25</span>
+          </div>
+          <input type="range" id="input-prolong-wait" min="0" max="100" step="1" value="25">
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">
+            <span>Вес: Доля неуспешных транзакций (w_failed_tx_ratio)</span>
+            <span class="slider-val-badge" id="val-failed-tx">10</span>
+          </div>
+          <input type="range" id="input-failed-tx" min="0" max="100" step="1" value="10">
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+          <div class="field-group">
+            <div class="field-label">
+              <span>Порог высокого риска</span>
+              <span class="slider-val-badge" id="val-thresh-high">70</span>
+            </div>
+            <input type="range" id="input-thresh-high" min="1" max="99" step="1" value="70">
+          </div>
+
+          <div class="field-group">
+            <div class="field-label">
+              <span>Порог среднего риска</span>
+              <span class="slider-val-badge" id="val-thresh-med">35</span>
+            </div>
+            <input type="range" id="input-thresh-med" min="1" max="99" step="1" value="35">
+          </div>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">
+            <span>Горизонт прогноза денежных потерь (дней)</span>
+          </div>
+          <input type="number" id="input-forecast-days" class="input-text" min="1" max="365" value="30">
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-ghost" id="btn-reset-settings">Сброс по умолчанию</button>
+          <button type="submit" class="btn btn-primary">Сохранить и пересчитать</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Data Snapshot Upload -->
+  <div class="modal-backdrop" id="modal-snapshot">
+    <div class="modal-dialog">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title-text">Загрузка снимка данных (Snapshot)</h2>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+            Эндпоинт PUT /api/v1/source/snapshot с автоматическим пересчетом
+          </div>
+        </div>
+        <button class="close-x" id="btn-close-snapshot">&times;</button>
+      </div>
+
+      <form id="snapshot-form">
+        <div class="field-group">
+          <label class="field-label">Выберите JSON-файл снимка (data.json):</label>
+          <input type="file" id="snapshot-file-input" accept=".json" class="input-text">
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Или вставьте JSON напрямую:</label>
+          <textarea id="snapshot-text-input" class="input-text" rows="7" placeholder='{"accounts": [...], "services": [...], "transactions": [...]}'></textarea>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.25rem;">
+          <button type="button" class="btn btn-danger-outline" id="btn-reset-snapshot" style="font-size: 0.8rem;">Сбросить к data.json</button>
+          <div style="display: flex; gap: 0.75rem;">
+            <button type="button" class="btn btn-ghost" id="btn-cancel-snapshot">Отмена</button>
+            <button type="submit" class="btn btn-primary">Загрузить снимок</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Customer Detail Drilldown -->
+  <div class="modal-backdrop" id="modal-customer-detail">
+    <div class="modal-dialog" style="max-width: 840px;">
+      <div class="modal-head">
+        <div>
+          <h2 class="modal-title-text" id="detail-customer-title">Клиент #...</h2>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Полный профиль клиента, сервисы и риск-факторы</div>
+        </div>
+        <button class="close-x" id="btn-close-detail">&times;</button>
+      </div>
+      <div id="detail-customer-body">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Authentication / Login + OIDC SSO -->
+  <div class="modal-backdrop" id="modal-auth">
+    <div class="modal-dialog" style="max-width: 480px;">
+      <div class="auth-header-brand">
+        <div class="aeza-keycaps-logo large">
+          <div class="keycap">a</div>
+          <div class="keycap keycap-accent">é</div>
+          <div class="keycap">z</div>
+          <div class="keycap">a</div>
+        </div>
+      </div>
+
+      <div class="modal-head" style="margin-bottom: 0.75rem;">
+        <div>
+          <h2 class="modal-title-text">Авторизация в Aéza</h2>
+          <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">
+            Защищенный доступ к аналитической панели и API
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth Tabs: Login/Password vs OIDC -->
+      <div style="display: flex; background: var(--bg-muted); border-radius: var(--radius-sm); padding: 0.25rem; margin-bottom: 1.25rem;">
+        <button type="button" id="tab-btn-basic" class="btn" style="flex: 1; border: none; background: var(--bg-card); color: var(--text-primary);">
+          Логин и пароль
+        </button>
+        <button type="button" id="tab-btn-oidc" class="btn btn-ghost" style="flex: 1; border: none;">
+          Aéza ID (OIDC SSO)
+        </button>
+      </div>
+
+      <!-- Tab Content: Basic Password Form -->
+      <div id="auth-tab-basic">
+        <form id="login-form">
+          <div class="field-group">
+            <label class="field-label">Имя пользователя (Логин):</label>
+            <input type="text" id="login-username" class="input-text" placeholder="Введите логин" required autocomplete="username">
+          </div>
+
+          <div class="field-group">
+            <label class="field-label">Пароль:</label>
+            <input type="password" id="login-password" class="input-text" placeholder="Введите пароль" required autocomplete="current-password">
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.7rem; margin-top: 1rem;">
+            Войти в систему
+          </button>
+        </form>
+      </div>
+
+      <!-- Tab Content: OIDC Single Sign-On -->
+      <div id="auth-tab-oidc" style="display: none;">
+        <div class="oidc-card">
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <div style="width: 8px; height: 8px; border-radius: 50%; background: var(--brand-orange); box-shadow: 0 0 8px var(--brand-orange);"></div>
+            <span style="font-weight: 700; font-size: 0.85rem; color: var(--brand-orange);">Aéza OpenID Connect Provider</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+            Единая точка входа для сотрудников и аналитиков сервиса. Не требует ручного ввода локального пароля.
+          </p>
+
+          <div class="oidc-user-card">
+            <div class="user-avatar" style="width: 32px; height: 32px; font-size: 0.9rem;">é</div>
+            <div style="flex: 1;">
+              <div style="font-weight: 700; font-size: 0.85rem; color: var(--text-primary);">oidc_analyst@aeza.net</div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">Scope: openid, profile, hosting:analytics</div>
+            </div>
+            <span class="status-badge low" style="font-size: 0.65rem;">Verified</span>
+          </div>
+
+          <button type="button" class="btn btn-oidc" id="btn-oidc-confirm" style="width: 100%; padding: 0.65rem; justify-content: center; font-weight: 700;">
+            Войти как oidc_analyst@aeza.net
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Shelf -->
+  <div class="toast-shelf" id="toast-shelf"></div>
+  <span id="live-status-text" style="display: none;"></span>
+
+  <script src="/static/app.js?v=3.0"></script>
+</body>
+</html>
